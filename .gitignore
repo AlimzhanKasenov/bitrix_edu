@@ -14,7 +14,5 @@ upload/
 upload/tmp/
 upload/resize_cache/
 .env
-local/php_interface/dbconn.php
-local/php_interface/sphinx.conf.php
 Thumbs.db
 .DS_Store
