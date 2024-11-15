@@ -16,4 +16,4 @@ upload/resize_cache/
 .env
 Thumbs.db
 .DS_Store
-debug_log.txt
+debug_log_with_otus.txt
