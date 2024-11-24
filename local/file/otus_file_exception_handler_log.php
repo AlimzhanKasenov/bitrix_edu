@@ -1,9 +1,10 @@
 <?php
 namespace local\file\otus_file_exception_handler_log;
 
+use Bitrix\Main\Diag\ExceptionHandler;
 use Bitrix\Main\Diag\ExceptionHandlerFormatter;
 
-class OtusFileExceptionHandlerLog
+class OtusFileExceptionHandlerLog extends ExceptionHandler
 {
     private $logFile;
 
