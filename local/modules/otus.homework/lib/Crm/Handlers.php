@@ -10,27 +10,32 @@ class Handlers
     {
         $tabs = $event->getParameter('tabs');
         $entityTypeId = $event->getParameter('entityTypeID');
-        if ($entityTypeId != \CCrmOwnerType::Deal) {
-            return new \Bitrix\Main\EventResult(\Bitrix\Main\EventResult::SUCCESS, [
-                'tabs' => $tabs,
-            ]);
+
+        // Проверяем, что это именно сделка
+        if ($entityTypeId !== \CCrmOwnerType::Deal) {
+            return new EventResult(EventResult::SUCCESS, ['tabs' => $tabs]);
         }
-        $dealId = $event->getParameter('entityID');
+
+        $dealId = (int)$event->getParameter('entityID'); // ID сделки
+
+        // Добавляем нашу вкладку
         $tabs[] = [
-            'id' => 'test',
-            'name' => 'Тестовая вкладка',
+            'id' => 'test', // Уникальный ID вкладки
+            'name' => 'Тестовая вкладка', // Название вкладки
             'loader' => [
-                'serviceUrl' => '/bitrix/components/otus.homework/otus.grid/lazyload.ajax.php?&site=' . \SITE_ID . '&' . \bitrix_sessid_get(),
+                'serviceUrl' => '/bitrix/components/otus.homework/otus.grid/lazyload.ajax.php'
+                    . '?dealId=' . $dealId
+                    . '&site=' . \SITE_ID
+                    . '&' . bitrix_sessid_get(),
                 'componentData' => [
                     'template' => '',
                     'params' => [
-                        'DEAL_ID' => $dealId,
+                        'dealId' => $dealId, // Передаём ID сделки в компонент
                     ],
                 ],
             ],
         ];
-        return new \Bitrix\Main\EventResult(\Bitrix\Main\EventResult::SUCCESS, [
-            'tabs' => $tabs,
-        ]);
+
+        return new EventResult(EventResult::SUCCESS, ['tabs' => $tabs]);
     }
 }
