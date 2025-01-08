@@ -1,45 +1,31 @@
 <?php
 
-declare(strict_types=1);
-
 use Bitrix\Main\Application;
-use Bitrix\Main\Loader;
-
-define('NO_KEEP_STATISTIC', 'Y');
-define('NO_AGENT_STATISTIC', 'Y');
-define('NO_AGENT_CHECK', true);
-define('PUBLIC_AJAX_MODE', true);
-define('DisableEventsCheck', true);
-
-$siteID = isset($_REQUEST['site']) ? mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2) : '';
-if ($siteID !== '') {
-    define('SITE_ID', $siteID);
-}
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php');
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
-    die('Access denied.');
-}
+// Логируем начало
+file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/lazyload_log.txt', "=== Старт lazyload.ajax.php ===\n", FILE_APPEND);
 
-// Проверка модулей
-if (!Loader::includeModule('crm') || !Loader::includeModule('iblock') || !check_bitrix_sessid()) {
-    die('Module load error or access denied.');
-}
-
-// Получаем ID сделки
 $dealId = (int)Application::getInstance()->getContext()->getRequest()->get('dealId');
+file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/lazyload_log.txt', "Получен dealId={$dealId}\n", FILE_APPEND);
 
-// Логирование для отладки
-file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/lazyload_log.txt', "Запрос получен: dealId={$dealId}\n", FILE_APPEND);
+// Буферизация вывода
+ob_start();
 
-// Вызов компонента
+global $APPLICATION;
 $APPLICATION->IncludeComponent(
-    'otus.homework:otus.grid',
-    '.default',
+    'otus.homework:otus.grid', // Название компонента
+    '.default',                // Шаблон компонента
     [
-        'DEAL_ID' => $dealId,
+        'DEAL_ID' => $dealId,  // Параметры
     ]
 );
 
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php');
+$response = ob_get_clean();
+file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/lazyload_log.txt', "Содержимое ответа: {$response}\n", FILE_APPEND);
+
+// Отправляем вывод
+echo $response;
+
+file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/lazyload_log.txt', "=== Завершение lazyload.ajax.php ===\n", FILE_APPEND);
