@@ -1,9 +1,23 @@
 <?php
 use Bitrix\Main\Loader;
+use Bitrix\Main\EventManager;
 
-// Автозагрузка классов
-Loader::registerAutoLoadClasses(null, [
-    'Bitrix\Table\TableTable' => '/local/app/Models/customTable.php',
+// Подключаем модуль инфоблоков (до регистрации события!)
+Loader::includeModule('iblock');
 
-    'local\file\otus_file_exception_handler_log\OtusFileExceptionHandlerLog' => '/local/file/otus_file_exception_handler_log.php',
-]);
+// Регистрируем обработчик
+$eventManager = EventManager::getInstance();
+$eventManager->addEventHandler(
+    'iblock',
+    'OnIBlockPropertyBuildList',
+    ['CustomProperty\ProcedureSelector', 'GetUserTypeDescription']
+);
+
+// Ваш автозагрузчик для класса ProcedureSelector
+spl_autoload_register(function ($class) {
+    $filePath = $_SERVER["DOCUMENT_ROOT"] . "/local/php_interface/classes/"
+        . str_replace("\\", "/", $class) . ".php";
+    if (file_exists($filePath)) {
+        require_once $filePath;
+    }
+});
