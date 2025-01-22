@@ -89,7 +89,7 @@ if ($canViewTemplates)
 {
 	$aMenuLinks[] = [
 		GetMessage('SERVICES_MENU_MARKETING_TEMPLATES'),
-		SITE_DIR.'marketing/template/',
+		SITE_DIR.'marketing/templates/',
 		[],
 		[],
 		''

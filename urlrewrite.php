@@ -410,7 +410,7 @@ $arUrlRewrite=array (
   ),
   129 => 
   array (
-    'CONDITION' => '#^/marketing/template/#',
+    'CONDITION' => '#^/marketing/templates/#',
     'RULE' => '',
     'ID' => '',
     'PATH' => '/marketing/template.php',

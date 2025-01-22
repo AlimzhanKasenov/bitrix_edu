@@ -34,7 +34,7 @@ class Handlers
                     . '&site=' . \SITE_ID
                     . '&' . bitrix_sessid_get(),
                 'componentData' => [
-                    'template' => '.default',
+                    'templates' => '.default',
                     'params' => [
                         'DEAL_ID' => $dealId,
                     ],

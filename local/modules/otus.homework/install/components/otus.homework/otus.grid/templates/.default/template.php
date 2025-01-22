@@ -2,8 +2,8 @@
 
 <?php
 $logFile = $_SERVER['DOCUMENT_ROOT'] . '/lazyload_log.txt';
-file_put_contents($logFile, "=== [template.php] Загрузка шаблона ===\n", FILE_APPEND);
-file_put_contents($logFile, "[template.php] arResult: " . print_r($arResult, true) . "\n", FILE_APPEND);
+file_put_contents($logFile, "=== [templates.php] Загрузка шаблона ===\n", FILE_APPEND);
+file_put_contents($logFile, "[templates.php] arResult: " . print_r($arResult, true) . "\n", FILE_APPEND);
 
 // Тестовый вывод
 echo "<p style='color: green;'>Шаблон успешно подключен!</p>";

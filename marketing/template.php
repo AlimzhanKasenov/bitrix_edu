@@ -5,10 +5,10 @@
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 
 $APPLICATION->IncludeComponent(
-	'bitrix:sender.template',
+	'bitrix:sender.templates',
 	'.default',
 	[
-		'SEF_FOLDER' => SITE_DIR.'marketing/template/',
+		'SEF_FOLDER' => SITE_DIR.'marketing/templates/',
 		'SEF_MODE' => 'Y',
 	]
 );
