@@ -1,15 +1,34 @@
 <?php if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?>
 
 <?php
-// Логируем загрузку шаблона
-file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/lazyload_log.txt', "=== Загрузка шаблона otus.grid ===\n", FILE_APPEND);
+$logFile = $_SERVER['DOCUMENT_ROOT'] . '/lazyload_log.txt';
+file_put_contents($logFile, "=== [template.php] Загрузка шаблона ===\n", FILE_APPEND);
+file_put_contents($logFile, "[template.php] arResult: " . print_r($arResult, true) . "\n", FILE_APPEND);
+
+// Тестовый вывод
+echo "<p style='color: green;'>Шаблон успешно подключен!</p>";
 ?>
 
-<div style="margin: 20px; font-size: 16px; color: green;">
-    <?= htmlspecialcharsbx($arResult['TEST'] ?? 'Данных нет'); ?>
+<div>
+    <h2>Список данных из инфоблока</h2>
+    <?php if (!empty($arResult['ITEMS'])): ?>
+        <table border="1" cellpadding="5" cellspacing="0">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>ФИО</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($arResult['ITEMS'] as $item): ?>
+                <tr>
+                    <td><?= htmlspecialcharsbx($item['ID']) ?></td>
+                    <td><?= htmlspecialcharsbx($item['PROPERTY_FIO_VALUE']) ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php else: ?>
+        <p>Данные отсутствуют.</p>
+    <?php endif; ?>
 </div>
-
-<?php
-// Логируем завершение работы шаблона
-file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/lazyload_log.txt', "=== Завершение шаблона otus.grid ===\n", FILE_APPEND);
-?>
