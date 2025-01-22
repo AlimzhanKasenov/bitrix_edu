@@ -2,11 +2,8 @@
 
 <?php
 $logFile = $_SERVER['DOCUMENT_ROOT'] . '/lazyload_log.txt';
-file_put_contents($logFile, "=== [templates.php] Загрузка шаблона ===\n", FILE_APPEND);
-file_put_contents($logFile, "[templates.php] arResult: " . print_r($arResult, true) . "\n", FILE_APPEND);
-
-// Тестовый вывод
-echo "<p style='color: green;'>Шаблон успешно подключен!</p>";
+file_put_contents($logFile, "=== [template.php] Загрузка шаблона ===\n", FILE_APPEND);
+file_put_contents($logFile, "[template.php] arResult: " . print_r($arResult, true) . "\n", FILE_APPEND);
 ?>
 
 <div>
@@ -17,13 +14,15 @@ echo "<p style='color: green;'>Шаблон успешно подключен!</
             <tr>
                 <th>ID</th>
                 <th>ФИО</th>
+                <th>Процедуры</th>
             </tr>
             </thead>
             <tbody>
-            <?php foreach ($arResult['ITEMS'] as $item): ?>
+            <?php foreach ($arResult['ITEMS'] as $id => $item): ?>
                 <tr>
-                    <td><?= htmlspecialcharsbx($item['ID']) ?></td>
-                    <td><?= htmlspecialcharsbx($item['PROPERTY_FIO_VALUE']) ?></td>
+                    <td><?= htmlspecialcharsbx($id) ?></td>
+                    <td><?= htmlspecialcharsbx($item['NAME']) ?></td>
+                    <td><?= !empty($item['PROCEDURES']) ? implode(', ', array_map('htmlspecialcharsbx', $item['PROCEDURES'])) : 'Не указано' ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
