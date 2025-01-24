@@ -8,19 +8,15 @@ class ProcedureSelector
     public static function GetUserTypeDescription()
     {
         return [
-            // Чтобы свойство хранило ID элемента, нужно указать PROPERTY_TYPE = 'E'
-            'PROPERTY_TYPE'        => 'E',
-            'USER_TYPE'            => 'procedure_selector',
-            'DESCRIPTION'          => 'Запись на процедуру (привязка к элементам)',
-            // Методы, отвечающие за вывод/редактирование в админке
-            'GetPropertyFieldHtml'     => [__CLASS__, 'GetPropertyFieldHtml'],
-            'GetAdminListViewHTML'     => [__CLASS__, 'GetAdminListViewHTML'],
-            // Методы, отвечающие за вывод/редактирование в публичной части
-            'GetPublicViewHTML'        => [__CLASS__, 'GetPublicViewHTML'],
-            'GetPublicEditHTML'        => [__CLASS__, 'GetPublicEditHTML'],
+            'PROPERTY_TYPE' => 'E', // Тип свойства (привязка к элементу)
+            'USER_TYPE' => 'procedure_selector', // Уникальный идентификатор типа
+            'DESCRIPTION' => 'Запись на процедуру (привязка к элементам)',
+            'GetPropertyFieldHtml' => [__CLASS__, 'GetPropertyFieldHtml'],
+            'GetAdminListViewHTML' => [__CLASS__, 'GetAdminListViewHTML'],
+            'GetPublicViewHTML' => [__CLASS__, 'GetPublicViewHTML'],
+            'GetPublicEditHTML' => [__CLASS__, 'GetPublicEditHTML'],
         ];
     }
-
     /**
      * Админка: редактирование в форме элемента
      */
@@ -62,7 +58,7 @@ class ProcedureSelector
             return '&nbsp;';
         }
 
-        // Попробуем получить название элемента
+        // Получаем данные элемента инфоблока
         Loader::includeModule('iblock');
         $arElem = \CIBlockElement::GetList(
             [],
@@ -72,8 +68,14 @@ class ProcedureSelector
             ['ID', 'NAME']
         )->Fetch();
 
-        return $arElem ? htmlspecialchars($arElem['NAME']) : $elementId;
+        if ($arElem) {
+            // Генерируем ссылку для открытия модального окна
+            return '<a href="#" class="open-modal" data-id="' . $arElem['ID'] . '">' . htmlspecialchars($arElem['NAME']) . '</a>';
+        }
+
+        return '<span style="color: gray;">Нет данных</span>';
     }
+
 
     /**
      * Публичная часть: вывод (view)
@@ -91,15 +93,17 @@ class ProcedureSelector
             ['ID' => $elementId],
             false,
             false,
-            ['ID','NAME']
+            ['ID', 'NAME']
         )->Fetch();
 
         if ($arElem) {
-            return '<span>' . htmlspecialchars($arElem['NAME']) . '</span>';
+            // Создаём ссылку для открытия модального окна
+            return '<a href="#" class="open-modal" data-id="' . $arElem['ID'] . '">' . htmlspecialchars($arElem['NAME']) . '</a>';
         }
 
         return '<span style="color: gray;">Нет данных</span>';
     }
+
 
     /**
      * Публичная часть: редактирование (edit)
@@ -112,10 +116,10 @@ class ProcedureSelector
         $html = '<select name="' . $strHTMLControlName["VALUE"] . '">';
         $html .= '<option value="">(не выбрано)</option>';
 
-        // Выбираем элементы из нужного ИБ
+        // Заполняем список элементов (например, из инфоблока "Процедуры")
         $rs = \CIBlockElement::GetList(
             ['SORT' => 'ASC'],
-            ['IBLOCK_ID' => 2, 'ACTIVE' => 'Y'],
+            ['IBLOCK_ID' => 17, 'ACTIVE' => 'Y'],
             false,
             false,
             ['ID', 'NAME']
@@ -129,4 +133,5 @@ class ProcedureSelector
         $html .= '</select>';
         return $html;
     }
+
 }
