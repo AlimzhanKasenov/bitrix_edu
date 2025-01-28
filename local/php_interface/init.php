@@ -2,6 +2,8 @@
 use Bitrix\Main\Loader;
 use Bitrix\Main\EventManager;
 
+Bitrix\Main\UI\Extension::load(['popup', 'crm.currency', 'time.custom']);
+
 // Подключаем нужные модули
 Loader::includeModule('iblock');
 
