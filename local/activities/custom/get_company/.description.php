@@ -30,4 +30,11 @@ $arActivityDescription = [
             'TYPE' => FieldType::STRING,
         ],
     ],
+    'PARAMETERS'  => [
+        'Inn' => [
+            'NAME' => 'ИНН компании',
+            'TYPE' => FieldType::STRING,
+            'REQUIRED' => true, // Параметр обязательный
+        ],
+    ],
 ];
