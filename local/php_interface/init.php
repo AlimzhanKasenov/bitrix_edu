@@ -139,3 +139,10 @@ $eventManager->addEventHandler('main', 'OnEpilog', function () {
         ';
     }
 });
+
+
+// Подключаем файл с обработчиками инфоблока
+require_once __DIR__ . '/events/iblock_events.php';
+
+// Подключаем файл с обработчиками CRM (сделки)
+require_once __DIR__ . '/events/crm_events.php';
