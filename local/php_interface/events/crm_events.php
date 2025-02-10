@@ -70,7 +70,6 @@ class CrmDealHandlers
                 "ASSIGNED" => $ob["PROPERTY_ASSIGNED_VALUE"],
             ];
         }
-
         return null;
     }
 }
