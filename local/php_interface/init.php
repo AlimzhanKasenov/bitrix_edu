@@ -1,11 +1,35 @@
 <?php
 use Bitrix\Main\Loader;
 use Bitrix\Main\EventManager;
+use RestApi\BusinessProcessHandler;
 
 Bitrix\Main\UI\Extension::load(['popup', 'crm.currency', 'time.custom']);
 
-// Подключаем нужные модули
-Loader::includeModule('iblock');
+// Подключаем модуль инфоблоков, если нужно
+Loader::includeModule("iblock");
+
+// Подключаем класс REST API
+require_once $_SERVER["DOCUMENT_ROOT"] . "/local/rest/api/BusinessProcessHandler.php";
+
+// Регистрируем наш класс в автозагрузке (рекомендуется)
+Loader::registerAutoLoadClasses(null, [
+    'Local\Rest\Api\BusinessProcessHandler' => '/local/rest/api/BusinessProcessHandler.php',
+]);
+
+// Регистрируем обработчик REST
+$eventManager = EventManager::getInstance();
+$eventManager->addEventHandlerCompatible(
+    'rest',
+    'OnRestServiceBuildDescription',
+    ['Local\Rest\Api\BusinessProcessHandler', 'onRestServiceBuildDescription']
+);
+
+
+
+
+
+
+
 
 $eventManager = EventManager::getInstance();
 
