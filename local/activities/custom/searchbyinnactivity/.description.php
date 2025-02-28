@@ -1,5 +1,5 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
 
@@ -7,7 +7,7 @@ $arActivityDescription = [
     "NAME"        => Loc::getMessage("SEARCHBYINN_DESCR_NAME"),   // Название активности
     "DESCRIPTION" => Loc::getMessage("SEARCHBYINN_DESCR_DESCR"),  // Описание активности
     "TYPE"        => "activity",
-    "CLASS"       => "CBPSearchByInnActivity",                    // Важно совпадение с именем класса!
+    "CLASS"       => "CBPSearchByInnActivity",                    // Важно совпадение с именем класса
     "JSCLASS"     => "BizProcActivity",
     "CATEGORY"    => [
         "ID"       => "other",

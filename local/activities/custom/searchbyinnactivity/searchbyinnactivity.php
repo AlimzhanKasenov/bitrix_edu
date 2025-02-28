@@ -8,7 +8,10 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Crm\CompanyTable;
+use Bitrix\Crm\Settings\LeadSettings;
 use CIBlockElement;
+use CUserTypeCrm; // Для правильной привязки CRM-элемента
 
 class CBPSearchByInnActivity extends BaseActivity
 {
@@ -16,128 +19,126 @@ class CBPSearchByInnActivity extends BaseActivity
     {
         parent::__construct($name);
 
+        // ✅ Оставляем все свойства, которые были ранее
         $this->arProperties = [
             'Inn'                => '',    // Вход: ИНН
             'Text'               => null,  // Выход: название компании
-            'ZakazchikElementID' => null,  // Выход: ID найденного/созданного элемента в ИБ 27
-            'ElementId26'        => null,  // Вход: ID элемента в ИБ 26, куда пишем ZAKAZCHIK
+            'ZakazchikElementID' => null,  // Выход: ID найденной/созданной компании в CRM
+            'ElementId26'        => null,  // Вход: ID элемента в ИБ 26
+            'ErrorText'          => null,  // Выход: текст ошибки
         ];
 
+        // ✅ Сохраняем типы данных
         $this->SetPropertiesTypes([
+            'Inn'                => ['Type' => FieldType::STRING],
             'Text'               => ['Type' => FieldType::STRING],
             'ZakazchikElementID' => ['Type' => FieldType::INT],
             'ElementId26'        => ['Type' => FieldType::INT],
+            'ErrorText'          => ['Type' => FieldType::TEXT],
         ]);
     }
 
-    // Требуется в некоторых версиях Битрикс для корректной работы
     protected static function getFileName(): string
     {
         return __FILE__;
     }
 
     /**
-     * Основная логика выполнения активности
+     * Основная логика выполнения
      */
     protected function internalExecute(): ErrorCollection
     {
-        // Коллекция ошибок
         $errors = parent::internalExecute();
 
-        // 1. Проверяем модуль инфоблоков
-        if (!Loader::includeModule('iblock')) {
+        // ✅ 1. Проверяем модули
+        if (!Loader::includeModule('crm'))
+        {
+            $errors->setError(new Error('Модуль CRM не установлен'));
+            $this->preparedProperties['ErrorText'] = 'Модуль CRM не установлен';
+            return $errors;
+        }
+        if (!Loader::includeModule('iblock'))
+        {
             $errors->setError(new Error('Модуль iblock не установлен'));
+            $this->preparedProperties['ErrorText'] = 'Модуль iblock не установлен';
             return $errors;
         }
 
-        // 2. Проверка входных данных — ИНН
+        // ✅ 2. Проверяем входные данные
         $inn = trim($this->Inn);
-        if (!$inn || !preg_match('/^\d{10,12}$/', $inn)) {
+        if (!$inn || !preg_match('/^\d{10,12}$/', $inn))
+        {
             $errors->setError(new Error('Некорректный ИНН'));
+            $this->preparedProperties['ErrorText'] = 'Некорректный ИНН';
             return $errors;
         }
 
-        // Параметры
-        $iblockId27 = 27; // Инфоблок «Компании»
-        $iblockId26 = 26; // Инфоблок, где будем писать ZAKAZCHIK
-        $zakazchikPropCode = "ZAKAZCHIK"; // Код свойства в ИБ 26
+        // ✅ 3. Ищем компанию в CRM по UF_CRM_1740658444 (новое поле для ИНН)
+        $company = CompanyTable::getList([
+            'filter' => ['=UF_CRM_1740658444' => $inn],
+            'select' => ['ID', 'TITLE']
+        ])->fetch();
 
-        // 3. Сначала проверяем, может компания уже есть в ИБ 27
-        $res = CIBlockElement::GetList(
-            ['ID' => 'ASC'],
-            [
-                'IBLOCK_ID'     => $iblockId27,
-                '=PROPERTY_INN' => $inn,
-                'ACTIVE'        => 'Y',
-            ],
-            false,
-            ['nTopCount' => 1],
-            ['ID', 'NAME']
-        );
-
-        $existingElement = $res->Fetch();
-
-        if ($existingElement) {
-            // Если уже есть
-            $elementId   = (int)$existingElement['ID'];
-            $companyName = $existingElement['NAME'];
-
-            // Запишем лог (опционально)
-            $this->log("Найдена существующая компания: {$companyName} (ID: {$elementId})");
-        } else {
-            // 4. Если компания не найдена, обращаемся к DaData
-            $token = "e035caa2775243da49a0701a724b7dae11ee400f"; // замените на реальный ключ
+        if ($company)
+        {
+            // Компания найдена
+            $companyId   = (int)$company['ID'];
+            $companyName = $company['TITLE'];
+        }
+        else
+        {
+            // ✅ 4. Если компании нет в CRM, ищем в DaData
+            $token = "e035caa2775243da49a0701a724b7dae11ee400f"; // API-ключ DaData
             $url   = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party";
 
             $companyData = $this->getCompanyFromDadata($url, $inn, $token);
-            if (!$companyData) {
+            if (!$companyData)
+            {
                 $errors->setError(new Error('Компания по ИНН не найдена в DaData'));
+                $this->preparedProperties['ErrorText'] = 'Компания по ИНН не найдена в DaData';
                 return $errors;
             }
 
-            // 5. Создаём новую запись в ИБ 27
-            $el = new CIBlockElement();
-            $fields = [
-                "IBLOCK_ID" => $iblockId27,
-                "NAME"      => $companyData["name"],
-                "ACTIVE"    => "Y",
-                "PROPERTY_VALUES" => [
-                    "INN"   => $companyData["inn"] ?? "",
-                    "KPP"   => $companyData["kpp"] ?? "",
-                    "OGRN"  => $companyData["ogrn"] ?? "",
-                    "ADRES" => $companyData["address"] ?? "",
-                ],
-            ];
+            // ✅ 5. Создаём новую компанию в CRM
+            $addResult = CompanyTable::add([
+                'TITLE'                => $companyData["name"],
+                'UF_CRM_1740658444'    => $companyData["inn"] ?? '',
+                'UF_CRM_ZAKAZCHIK_CRM' => $companyData["ogrn"] ?? '',
+                'ASSIGNED_BY_ID'       => 1, // ✅ Ответственный (администратор)
+                'MODIFY_BY_ID'         => 1, // ✅ Кем обновлено (администратор)
+            ]);
 
-            $elementId = $el->Add($fields);
-            if (!$elementId) {
-                $errors->setError(new Error('Ошибка создания элемента: ' . $el->LAST_ERROR));
+            if (!$addResult->isSuccess())
+            {
+                $errors->setError(new Error(
+                    'Ошибка создания компании в CRM: ' . implode('; ', $addResult->getErrorMessages())
+                ));
                 return $errors;
             }
 
-            // Запомним название
+            $companyId   = $addResult->getId();
             $companyName = $companyData["name"];
-
-            // Запишем лог (опционально)
-            $this->log("Создана новая компания: {$companyName} (ID: {$elementId})");
         }
 
-        // 6. Привязываем (записываем) эту компанию в элемент ИБ 26 (если указан ElementId26)
+        // ✅ 6. Записываем ID компании в инфоблок 26 (если указан ElementId26)
         $elementId26 = (int)$this->ElementId26;
-        if ($elementId26 > 0) {
+        if ($elementId26 > 0)
+        {
+            $crmCompanyBinding = 'CO_'.$companyId; // Формат для привязки к CRM
+
             CIBlockElement::SetPropertyValuesEx(
                 $elementId26,
-                $iblockId26,
-                [$zakazchikPropCode => $elementId]
+                26,
+                ['ZAKAZCHIK_CRM' => [$crmCompanyBinding]]
             );
-
-            $this->log("ID компании: {$elementId} записан в свойство ZAKAZCHIK у элемента ИБ 26: {$elementId26}");
         }
 
-        // 7. Устанавливаем выходные параметры
-        //    (будут доступны дальше в БП как переменные Text, ZakazchikElementID)
+        // ✅ 7. Возвращаем все нужные параметры
+        $this->preparedProperties['Inn']                = $inn;
         $this->preparedProperties['Text']               = $companyName;
-        $this->preparedProperties['ZakazchikElementID'] = $elementId;
+        $this->preparedProperties['ZakazchikElementID'] = $companyId;
+        $this->preparedProperties['ElementId26']        = $elementId26;
+        $this->preparedProperties['ErrorText']          = '';
 
         return $errors;
     }
@@ -179,27 +180,6 @@ class CBPSearchByInnActivity extends BaseActivity
             "ogrn"    => $company["data"]["ogrn"] ?? "",
             "kpp"     => $company["data"]["kpp"] ?? "",
             "address" => $company["data"]["address"]["unrestricted_value"] ?? "",
-        ];
-    }
-
-    /**
-     * Карта полей для настроек активности в Дизайнере БП
-     */
-    public static function getPropertiesDialogMap(?PropertiesDialog $dialog = null): array
-    {
-        return [
-            'Inn' => [
-                'Name'      => Loc::getMessage('SEARCHBYINN_ACTIVITY_FIELD_INN'),
-                'FieldName' => 'inn',
-                'Type'      => FieldType::STRING,
-                'Required'  => true,
-            ],
-            'ElementId26' => [
-                'Name'      => Loc::getMessage('SEARCHBYINN_ACTIVITY_FIELD_ELEMENT_ID_26'),
-                'FieldName' => 'element_id_26',
-                'Type'      => FieldType::INT,
-                'Required'  => false,
-            ],
         ];
     }
 }
